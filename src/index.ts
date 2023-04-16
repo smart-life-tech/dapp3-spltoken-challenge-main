@@ -556,7 +556,7 @@ async function main4() {
     payer,
     tokenMint,
     tokenAccount.address,
-    receiverPublicKey, // Replace `user` with the receiver's public key
+    user, // Replace `user` with the receiver's public key
     3 * 10 ** mintInfo.decimals
   );
   console.log(
