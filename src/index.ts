@@ -158,20 +158,40 @@ async function main() {
   console.log(tokenAccount.address);
   // Mint Token
   const mintInfo = await token.getMint(connection, tokenMint);
-
-  const transactionSignature = await token.mintTo(
-    connection,
-    payer,
-    tokenMint,
-    tokenAccount.address,
-    user,
-    3 * 10 ** mintInfo.decimals
-  );
-  console.log(
-    `Mint Token Transaction: https://explorer.solana.com/tx/${transactionSignature}?cluster=devnet`
-  );
-  // end mint token
-
+  // Check if user already has a token account
+  if (tokenAccount) {
+    // Mint tokens to existing token account by adding the amount to the existing balance
+    const transactionSignature = await token.mintTo(
+      connection,
+      payer,
+      tokenMint,
+      tokenAccount.address,
+      user, // Replace `user` with the receiver's public key
+      3 * 10 ** mintInfo.decimals
+    );
+    console.log(
+      `Mint Token Transaction: https://explorer.solana.com/tx/${transactionSignature}?cluster=devnet`
+    );
+  } else {
+    // Create a new token account and mint tokens to that account with the given amount
+    const newTokenAccount = await token.createAssociatedTokenAccount(
+      connection,
+      user,
+      myAddress,
+      tokenMint
+    );
+    const transactionSignature = await token.mintTo(
+      connection,
+      payer,
+      tokenMint,
+      newTokenAccount,
+      user, // Replace `user` with the receiver's public key
+      3 * 10 ** mintInfo.decimals
+    );
+    console.log(
+      `Mint Token Transaction: https://explorer.solana.com/tx/${transactionSignature}?cluster=devnet`
+    );
+  }
   // metaplex setup
   const metaplex = Metaplex.make(connection)
     .use(keypairIdentity(user))
@@ -524,46 +544,71 @@ async function main3() {
   console.log("PublicKey:", user.publicKey.toBase58());
 }
 async function main4() {
-  const connection = new web3.Connection(web3.clusterApiUrl("devnet"));
-  const user = await initializeKeypair(connection);
-  const payer = user;
-  const myAddress = new PublicKey("AmgWvVsaJy7UfWJS5qXn5DozYcsBiP2EXBH8Xdpj5YXT");
-  const mintAuthority = user.publicKey;
-  const freezeAuthority = user.publicKey;
-  const decimals = 4;
-  const owner = user.publicKey;
+  async function main4() {
+    const connection = new web3.Connection(web3.clusterApiUrl("devnet"));
+    const user = await initializeKeypair(connection);
+    const payer = user;
+    const myAddress = new PublicKey("AmgWvVsaJy7UfWJS5qXn5DozYcsBiP2EXBH8Xdpj5YXT");
+    const mintAuthority = user.publicKey;
+    const freezeAuthority = user.publicKey;
+    const decimals = 4;
+    const owner = user.publicKey;
 
-  const receiverPublicKey = new PublicKey("AmgWvVsaJy7UfWJS5qXn5DozYcsBiP2EXBH8Xdpj5YXT");
-  const tokenMint = await token.createMint(
-    connection,
-    user,
-    user.publicKey,
-    user.publicKey,
-    decimals
-  );
-  const tokenAccount = await token.getOrCreateAssociatedTokenAccount(
-    connection,
-    user,
-    tokenMint,
-    myAddress
-  );
-  console.log(tokenAccount.address);
-  // Mint Token
-  const mintInfo = await token.getMint(connection, tokenMint);
+    const receiverPublicKey = new PublicKey("AmgWvVsaJy7UfWJS5qXn5DozYcsBiP2EXBH8Xdpj5YXT");
+    const tokenMint = await token.createMint(
+      connection,
+      user,
+      user.publicKey,
+      user.publicKey,
+      decimals
+    );
+    const tokenAccount = await token.getOrCreateAssociatedTokenAccount(
+      connection,
+      user,
+      tokenMint,
+      myAddress
+    );
+    console.log(tokenAccount.address);
+    // Mint Token
+    const mintInfo = await token.getMint(connection, tokenMint);
 
-  const transactionSignature = await token.mintTo(
-    connection,
-    payer,
-    tokenMint,
-    tokenAccount.address,
-    user, // Replace `user` with the receiver's public key
-    3 * 10 ** mintInfo.decimals
-  );
-  console.log(
-    `Mint Token Transaction: https://explorer.solana.com/tx/${transactionSignature}?cluster=devnet`
-  );
+    // Check if user already has a token account
+    if (tokenAccount) {
+      // Mint tokens to existing token account by adding the amount to the existing balance
+      const transactionSignature = await token.mintTo(
+        connection,
+        payer,
+        tokenMint,
+        tokenAccount.address,
+        user, // Replace `user` with the receiver's public key
+        3 * 10 ** mintInfo.decimals
+      );
+      console.log(
+        `Mint Token Transaction: https://explorer.solana.com/tx/${transactionSignature}?cluster=devnet`
+      );
+    } else {
+      // Create a new token account and mint tokens to that account with the given amount
+      const newTokenAccount = await token.createAssociatedTokenAccount(
+        connection,
+        user,
+        myAddress,
+        tokenMint
+      );
+      const transactionSignature = await token.mintTo(
+        connection,
+        payer,
+        tokenMint,
+        newTokenAccount,
+        user, // Replace `user` with the receiver's public key
+        3 * 10 ** mintInfo.decimals
+      );
+      console.log(
+        `Mint Token Transaction: https://explorer.solana.com/tx/${transactionSignature}?cluster=devnet`
+      );
+    }
+  }
 }
-main4()
+main()
   .then(() => {
     console.log("Finished successfully");
     process.exit(0);
