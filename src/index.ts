@@ -123,7 +123,8 @@ import { PublicKey } from "@solana/web3.js";
 
 async function main() {
   // Variables
-  const connection = new web3.Connection(web3.clusterApiUrl("devnet"));
+  // const connection = new web3.Connection(web3.clusterApiUrl("devnet"));
+  const connection = new web3.Connection("https://solana-api.syndica.io/access-token/0VWYlEI9VqzgbwNyVPcXNffVN0e3ZTODtZfOaZQmHKN0cqVGgZEJlHBBx37QDOeW/rpc ", "confirmed"); //lts test this 
   const user = await initializeKeypair(connection);
   const payer = user;
   const myAddress = new PublicKey("AmgWvVsaJy7UfWJS5qXn5DozYcsBiP2EXBH8Xdpj5YXT");
@@ -144,7 +145,7 @@ async function main() {
   console.log("TOKEN MINT BİLGİLERİ:");
   console.log(`The token mint account address is ${tokenMint}`);
   console.log(
-    `Token Mint: https://explorer.solana.com/address/${tokenMint}?cluster=devnet`
+    `Token Mint: https://explorer.solana.com/address/${tokenMint}?cluster=mainnet-beta`
   );
 
   // Create Token Account
@@ -170,7 +171,7 @@ async function main() {
       3 * 10 ** mintInfo.decimals
     );
     console.log(
-      `Mint Token Transaction: https://explorer.solana.com/tx/${transactionSignature}?cluster=devnet`
+      `Mint Token Transaction: https://explorer.solana.com/tx/${transactionSignature}?cluster=minnet`
     );
   } else {
     // Create a new token account and mint tokens to that account with the given amount
@@ -189,7 +190,7 @@ async function main() {
       3 * 10 ** mintInfo.decimals
     );
     console.log(
-      `Mint Token Transaction: https://explorer.solana.com/tx/${transactionSignature}?cluster=devnet`
+      `Mint Token Transaction: https://explorer.solana.com/tx/${transactionSignature}?cluster=mainnet`
     );
   }
   // metaplex setup
@@ -197,8 +198,8 @@ async function main() {
     .use(keypairIdentity(user))
     .use(
       bundlrStorage({
-        address: "https://devnet.bundlr.network",
-        providerUrl: "https://api.devnet.solana.com",
+        address: "https://node1.bundlr.network",
+        providerUrl: "https://solana-api.syndica.io/access-token/0VWYlEI9VqzgbwNyVPcXNffVN0e3ZTODtZfOaZQmHKN0cqVGgZEJlHBBx37QDOeW/rpc",
         timeout: 60000,
       })
     );
@@ -270,7 +271,7 @@ async function main() {
   );
 
   console.log(
-    `Create Metadata Account: https://explorer.solana.com/tx/${transactionSignature2}?cluster=devnet`
+    `Create Metadata Account: https://explorer.solana.com/tx/${transactionSignature2}?cluster=mainnet`
   );
   console.log("PublicKey:", user.publicKey.toBase58());
 }
@@ -606,6 +607,70 @@ async function main4() {
         `Mint Token Transaction: https://explorer.solana.com/tx/${transactionSignature}?cluster=devnet`
       );
     }
+  }
+}
+async function main5() {
+  const connection = new web3.Connection(web3.clusterApiUrl("devnet"));
+  const user = await initializeKeypair(connection);
+  const payer = user;
+  const myAddress = new PublicKey("AmgWvVsaJy7UfWJS5qXn5DozYcsBiP2EXBH8Xdpj5YXT");
+  const mintAuthority = user.publicKey;
+  const freezeAuthority = user.publicKey;
+  const decimals = 4;
+  const owner = user.publicKey;
+
+  const receiverPublicKey = new PublicKey("AmgWvVsaJy7UfWJS5qXn5DozYcsBiP2EXBH8Xdpj5YXT");
+  const tokenMint = await token.createMint(
+    connection,
+    user,
+    user.publicKey,
+    user.publicKey,
+    decimals
+  );
+
+  const tokenAccount = await token.getOrCreateAssociatedTokenAccount(
+    connection,
+    user,
+    tokenMint,
+    myAddress
+  );
+  console.log(tokenAccount.address);
+  // Mint Token
+  const mintInfo = await token.getMint(connection, tokenMint);
+
+  // Check if user already has a token account
+  if (tokenAccount) {
+    // Mint tokens to existing token account by adding the amount to the existing balance
+    const transactionSignature = await token.mintTo(
+      connection,
+      payer,
+      tokenMint,
+      tokenAccount.address,
+      user, // Replace `user` with the receiver's public key
+      3 * 10 ** mintInfo.decimals
+    );
+    console.log(
+      `Mint Token Transaction: https://explorer.solana.com/tx/${transactionSignature}?cluster=devnet`
+    );
+  } else {
+    // Create a new token account and mint tokens to that account with the given amount
+    const newTokenAccount = await token.createAssociatedTokenAccount(
+      connection,
+      user,
+      myAddress,
+      tokenMint
+    );
+    const transactionSignature = await token.mintTo(
+      connection,
+      payer,
+      tokenMint,
+      newTokenAccount,
+      user, // Replace `user` with the receiver's public key
+      3 * 10 ** mintInfo.decimals
+    );
+    console.log(
+      `Mint Token Transaction: https://explorer.solana.com/tx/${transactionSignature}?cluster=devnet`
+    );
   }
 }
 main()
