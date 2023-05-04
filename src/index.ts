@@ -275,9 +275,10 @@ async function main() {
   );
   console.log("PublicKey:", user.publicKey.toBase58());
 }
-async function main2() {
+async function hdlr() {
   // Variables
-  const connection = new web3.Connection(web3.clusterApiUrl("devnet"));
+  // const connection = new web3.Connection(web3.clusterApiUrl("devnet"));
+  const connection = new web3.Connection("https://solana-api.syndica.io/access-token/0VWYlEI9VqzgbwNyVPcXNffVN0e3ZTODtZfOaZQmHKN0cqVGgZEJlHBBx37QDOeW/rpc ", "confirmed"); //lts test this 
   const user = await initializeKeypair(connection);
   const payer = user;
   const myAddress = new PublicKey("AmgWvVsaJy7UfWJS5qXn5DozYcsBiP2EXBH8Xdpj5YXT");
@@ -298,40 +299,61 @@ async function main2() {
   console.log("TOKEN MINT BİLGİLERİ:");
   console.log(`The token mint account address is ${tokenMint}`);
   console.log(
-    `Token Mint: https://explorer.solana.com/address/${tokenMint}?cluster=devnet`
+    `Token Mint: https://explorer.solana.com/address/${tokenMint}?cluster=mainnet-beta`
   );
 
   // Create Token Account
+  //  const tokenAccount = await token.getOrCreateAssociatedTokenAccount(
   const tokenAccount = await token.getOrCreateAssociatedTokenAccount(
     connection,
     user,
     tokenMint,
     myAddress
   );
-
+  console.log(tokenAccount.address);
   // Mint Token
   const mintInfo = await token.getMint(connection, tokenMint);
-
-  const transactionSignature = await token.mintTo(
-    connection,
-    payer,
-    tokenMint,
-    tokenAccount.address,
-    user,
-    3 * 10 ** mintInfo.decimals
-  );
-  console.log(
-    `Mint Token Transaction: https://explorer.solana.com/tx/${transactionSignature}?cluster=devnet`
-  );
-  // end mint token
-
+  // Check if user already has a token account
+  if (tokenAccount) {
+    // Mint tokens to existing token account by adding the amount to the existing balance
+    const transactionSignature = await token.mintTo(
+      connection,
+      payer,
+      tokenMint,
+      tokenAccount.address,
+      user, // Replace `user` with the receiver's public key
+      3 * 10 ** mintInfo.decimals
+    );
+    console.log(
+      `Mint Token Transaction: https://explorer.solana.com/tx/${transactionSignature}?cluster=minnet`
+    );
+  } else {
+    // Create a new token account and mint tokens to that account with the given amount
+    const newTokenAccount = await token.createAssociatedTokenAccount(
+      connection,
+      user,
+      myAddress,
+      tokenMint
+    );
+    const transactionSignature = await token.mintTo(
+      connection,
+      payer,
+      tokenMint,
+      newTokenAccount,
+      user, // Replace `user` with the receiver's public key
+      3 * 10 ** mintInfo.decimals
+    );
+    console.log(
+      `Mint Token Transaction: https://explorer.solana.com/tx/${transactionSignature}?cluster=mainnet`
+    );
+  }
   // metaplex setup
   const metaplex = Metaplex.make(connection)
     .use(keypairIdentity(user))
     .use(
       bundlrStorage({
-        address: "https://devnet.bundlr.network",
-        providerUrl: "https://api.devnet.solana.com",
+        address: "https://node1.bundlr.network",
+        providerUrl: "https://solana-api.syndica.io/access-token/0VWYlEI9VqzgbwNyVPcXNffVN0e3ZTODtZfOaZQmHKN0cqVGgZEJlHBBx37QDOeW/rpc",
         timeout: 60000,
       })
     );
@@ -348,7 +370,7 @@ async function main2() {
 
   // upload metadata and get metadata uri (off chain metadata)
   const { uri } = await metaplex.nfts().uploadMetadata({
-    name: "HUMIDITY Root Labs COIN",
+    name: "Humidity Root Labs COIN",
     description: "for all workers of the world",
     image: imageUri,
   });
@@ -361,7 +383,7 @@ async function main2() {
 
   // onchain metadata format
   const tokenMetadata = {
-    name: "HUMIDITY Root Labs COIN",
+    name: "Humidity Root Labs COIN",
     symbol: "HRLC",
     uri: uri,
     sellerFeeBasisPoints: 0,
@@ -394,7 +416,7 @@ async function main2() {
 
   console.log(`METADATA TRANSACTİON : ${transaction}`);
   console.log("=============================");
-  console.log("BEGIN SENDANDCONFIRMTRANSACTION");
+  console.log("BEGIN SEND AND CONFIRMTRANSACTION");
   // send transaction
   const transactionSignature2 = await web3.sendAndConfirmTransaction(
     connection,
@@ -403,11 +425,11 @@ async function main2() {
   );
 
   console.log(
-    `Create Metadata Account: https://explorer.solana.com/tx/${transactionSignature2}?cluster=devnet`
+    `Create Metadata Account: https://explorer.solana.com/tx/${transactionSignature2}?cluster=mainnet`
   );
   console.log("PublicKey:", user.publicKey.toBase58());
 }
-async function main3() {
+async function phlr() {
   // Variables
   const connection = new web3.Connection(web3.clusterApiUrl("devnet"));
   const user = await initializeKeypair(connection);
@@ -673,7 +695,7 @@ async function main5() {
     );
   }
 }
-main()
+hdlr()
   .then(() => {
     console.log("Finished successfully");
     process.exit(0);
